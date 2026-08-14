@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.venv/
+venv/
+
+# Never commit real private keys generated for actual use.
+*.pem
+!keys/README.md
