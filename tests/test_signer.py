@@ -75,6 +75,21 @@ class TestKeygen:
         key = load_private_key(priv_path, password=b"hunter2")
         assert key.key_size == TEST_KEY_SIZE
 
+    def test_refuses_to_overwrite_existing_keys(self, keypair):
+        priv_path, pub_path = keypair
+
+        # A second run must refuse to clobber the existing identity.
+        with pytest.raises(FileExistsError):
+            generate_keypair(priv_path, pub_path, key_size=TEST_KEY_SIZE)
+
+    def test_force_overwrites_existing_keys(self, keypair):
+        priv_path, pub_path = keypair
+        original = priv_path.read_text()
+
+        generate_keypair(priv_path, pub_path, key_size=TEST_KEY_SIZE, force=True)
+
+        assert priv_path.read_text() != original
+
 
 class TestSignAndVerify:
     def test_valid_signature_verifies(self, keypair, artifact, tmp_path):
