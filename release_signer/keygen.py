@@ -26,6 +26,7 @@ def generate_keypair(
     public_key_path: Path,
     key_size: int = DEFAULT_KEY_SIZE,
     password: bytes | None = None,
+    force: bool = False,
 ) -> None:
     """
     Generate an RSA keypair and write it to disk as two PEM files.
@@ -39,12 +40,25 @@ def generate_keypair(
             key is written unencrypted (fine for lab/demo use, but real
             signing identities should always set a password or rely on
             an HSM / KMS instead of a bare file).
+        force: if True, overwrite existing key files instead of refusing.
+            Off by default so a second keygen run can't silently replace
+            an existing signing identity.
 
     Raises:
         ValueError: if key_size is smaller than 2048 bits.
+        FileExistsError: if either destination file already exists and
+            force is False.
     """
     if key_size < 2048:
         raise ValueError("key_size must be >= 2048 bits for adequate security")
+
+    if not force:
+        for path in (private_key_path, public_key_path):
+            if path.exists():
+                raise FileExistsError(
+                    f"Refusing to overwrite existing key '{path}' "
+                    "(pass force=True to replace it)"
+                )
 
     private_key = rsa.generate_private_key(
         public_exponent=DEFAULT_PUBLIC_EXPONENT,

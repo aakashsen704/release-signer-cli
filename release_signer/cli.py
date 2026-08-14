@@ -66,6 +66,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Prompt for a password and encrypt the private key at rest",
     )
+    p_keygen.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing key files if present (default: refuse)",
+    )
 
     # --- sign -------------------------------------------------------------
     p_sign = subparsers.add_parser("sign", help="Sign a release artifact")
@@ -107,7 +112,17 @@ def _cmd_keygen(args: argparse.Namespace) -> int:
             return 1
         password = pw1.encode("utf-8")
 
-    generate_keypair(private_path, public_path, key_size=args.key_size, password=password)
+    try:
+        generate_keypair(
+            private_path,
+            public_path,
+            key_size=args.key_size,
+            password=password,
+            force=args.force,
+        )
+    except FileExistsError as exc:
+        print(_red(f"Error: {exc}"), file=sys.stderr)
+        return 1
 
     print(_green("Keypair generated successfully."))
     print(f"  Private key: {private_path}  (keep this secret!)")
